@@ -18,9 +18,14 @@ import 'file-loader?name=./apple-touch-icon-144x144.png!./img/apple-touch-icon-1
 import 'file-loader?name=./apple-touch-icon-152x152.png!./img/apple-touch-icon-152x152.png';
 import 'file-loader?name=./apple-touch-icon-180x180.png!./img/apple-touch-icon-180x180.png';
 
+// PWA Manifest
 import 'file-loader?name=./web-app-manifest.json!./web-app-manifest.json';
 
+// Dedicated Web Worker
 import 'worker-loader?name=./qr-worker.js!./qr-worker.js';
+
+// Service worker
+import 'worker-loader?name=./service-worker.js!./service-worker.js';
 
 ReactDOM.render(<App />, document.getElementById('root'));
 
@@ -28,4 +33,15 @@ if (module.hot) {
   module.hot.accept(function() {
     console.log('Accepting the updated printMe module!');
   });
+}
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker
+    .register('service-worker.js')
+    .then(registration => {
+      console.log('Registered!', registration);
+    })
+    .catch(error => {
+      console.log('Something went terribly wrong! 😬', error);
+    });
 }
