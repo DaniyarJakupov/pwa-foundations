@@ -12,6 +12,6 @@ self.addEventListener('activate', event => {
   console.log('activations', ++counts.activations);
 });
 
-self.addEventListener('fetch', event => {
-  console.log('fetches', ++counts.fetches);
-});
+// self.addEventListener('fetch', event => {
+//   console.log('fetches', event.request.url);
+// });
