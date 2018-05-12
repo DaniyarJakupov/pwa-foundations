@@ -36,12 +36,15 @@ self.addEventListener('fetch', event => {
     acceptHeader.indexOf('image/*') >= 0 &&
     requestUrl.pathname.indexOf('/images/') === 0
   ) {
+    // .respondWith takes a Promise
     event.respondWith(fetchImageOrFallback(event));
   }
 });
 
 /* ===================================================== */
 /* HELPERS */
+
+// Network with Cache Backup Technique
 function fetchImageOrFallback(fetchEvent) {
   return fetch(fetchEvent.request, {
     mode: 'cors'
