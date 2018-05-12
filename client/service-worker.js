@@ -16,8 +16,15 @@ self.addEventListener('install', event => {
 /* ACTIVATE SERVICE WORKER EVENT LISTENER */
 self.addEventListener('activate', event => {
   // REMOVE all caches except fallbackImages
-  // caches.keys().then(cacheNames => {
-  // })
+  caches.keys().then(cacheNames =>
+    Promise.all(
+      cacheNames
+        .filter(cacheName => {
+          return cacheName !== fallbackImages;
+        })
+        .map(cacheName => caches.delete(cacheName))
+    )
+  );
 });
 
 /* ===================================================== */
