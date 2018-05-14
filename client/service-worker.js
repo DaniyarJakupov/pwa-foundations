@@ -30,16 +30,27 @@ self.addEventListener('activate', event => {
 
 /* ===================================================== */
 /* FETCH REQUESTS EVENT LISTENER */
+/* Implementation of diff cache startegies depending on a file type */
 self.addEventListener('fetch', event => {
   let acceptHeader = event.request.headers.get('accept');
   let requestUrl = new URL(event.request.url);
-  if (
-    acceptHeader.indexOf('image/*') >= 0 &&
-    requestUrl.pathname.indexOf('/images/') === 0
-  ) {
-    // .respondWith takes a Promise
-    event.respondWith(fetchImageOrFallback(event));
-  }
+  // .respondWith() takes a Promise
+  event.respondWith(
+    caches
+      .match(event.request, { cacheName: ALL_CACHES.prefetch })
+      .then(response => {
+        // If precache with assets is found, return it
+        if (response) return response;
+        // Otherwise
+        if (acceptHeader.indexOf('image/*') >= 0) {
+          if (requestUrl.pathname.indexOf('/images/') === 0) {
+            return fetchImageOrFallback(event);
+          }
+        }
+        // Else make a request to the server
+        return fetch(event.request);
+      })
+  );
 });
 
 /* ===================================================== */
