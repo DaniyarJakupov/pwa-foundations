@@ -44,10 +44,11 @@ self.addEventListener('fetch', event => {
 /* ===================================================== */
 /* HELPERS */
 
-// Network with Cache Backup Technique
+// Cache then Network Technique
 function fetchImageOrFallback(fetchEvent) {
   return fetch(fetchEvent.request, {
-    mode: 'cors'
+    mode: 'cors',
+    credentials: 'omit' // in case CORS wildcard headers are present
   })
     .then(response => {
       if (!response.ok) {
