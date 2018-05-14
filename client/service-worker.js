@@ -1,30 +1,31 @@
-const FALLBACK_IMG = 'https://localhost:3100/images/fallback-grocery.png';
+import {
+  precacheStaticAssets,
+  removeUnusedCaches,
+  ALL_CACHES_LIST,
+  ALL_CACHES
+} from './sw/caches.js';
 
-const fallbackImages = 'fallback-image'; // cache name
+const FALLBACK_IMG_URL = 'https://localhost:3100/images/fallback-grocery.png';
 
 /* INSTALL SERVICE WORKER EVENT LISTENER */
 self.addEventListener('install', event => {
   // .waitUntil expects a Promise
-  // caches.open returns a Promise
   event.waitUntil(
-    caches.open(fallbackImages).then(cache => {
-      cache.add(FALLBACK_IMG);
-    })
+    Promise.all([
+      // get the fallback image
+      caches.open(ALL_CACHES.fallbackImages).then(cache => {
+        cache.add(FALLBACK_IMG_URL);
+      }),
+      // populate the precache assets
+      precacheStaticAssets()
+    ])
   );
 });
 /* ===================================================== */
 /* ACTIVATE SERVICE WORKER EVENT LISTENER */
 self.addEventListener('activate', event => {
-  // REMOVE all caches except fallbackImages
-  caches.keys().then(cacheNames =>
-    Promise.all(
-      cacheNames
-        .filter(cacheName => {
-          return cacheName !== fallbackImages;
-        })
-        .map(cacheName => caches.delete(cacheName))
-    )
-  );
+  // Delete all caches other than those whose names are provided in a list
+  event.waitUntil(removeUnusedCaches(ALL_CACHES_LIST));
 });
 
 /* ===================================================== */
@@ -43,7 +44,6 @@ self.addEventListener('fetch', event => {
 
 /* ===================================================== */
 /* HELPERS */
-
 // Cache then Network Technique
 function fetchImageOrFallback(fetchEvent) {
   return fetch(fetchEvent.request, {
@@ -52,12 +52,16 @@ function fetchImageOrFallback(fetchEvent) {
   })
     .then(response => {
       if (!response.ok) {
-        return caches.match(FALLBACK_IMG, { cacheName: fallbackImages });
+        return caches.match(FALLBACK_IMG_URL, {
+          cacheName: ALL_CACHES.fallbackImages
+        });
       } else {
         return response;
       }
     })
     .catch(() => {
-      return caches.match(FALLBACK_IMG, { cacheName: fallbackImages });
+      return caches.match(FALLBACK_IMG_URL, {
+        cacheName: ALL_CACHES.fallbackImages
+      });
     });
 }
