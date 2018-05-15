@@ -44,13 +44,30 @@ self.addEventListener('fetch', event => {
   let acceptHeader = event.request.headers.get('accept');
   let requestUrl = new URL(event.request.url);
 
+  // Check if the client requests image
   let isGroceryImage =
     acceptHeader.indexOf('image/*') >= 0 &&
     requestUrl.pathname.indexOf('/images/') === 0;
 
+  //  Check if the client makes an API call
   let isAPI = requestUrl.origin.indexOf('localhost:3100') >= 0;
 
-  /* Implementation of diff cache strategies depending on a file type */
+  //  Check if the client asks for html file
+  let isHTMLRequest =
+    event.request.headers.get('accept').indexOf('text/html') !== -1;
+  let isLocal = new URL(event.request.url).origin === location.origin;
+  if (isHTMLRequest && isLocal) {
+    event.respondWith(
+      // Fetch html from the server,
+      // if network is disabled, serve html from the prefetch cache
+      fetch(event.request).catch(() => {
+        return caches.match(INDEX_HTML_URL, {
+          cacheName: ALL_CACHES.prefetch
+        });
+      })
+    );
+  }
+  /* Implementation of diff cache strategies depending on a client request */
   // .respondWith() takes a Promise
   event.respondWith(
     caches
