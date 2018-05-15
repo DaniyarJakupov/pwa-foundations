@@ -1,4 +1,4 @@
-const CACHE_VERSION = 4;
+const CACHE_VERSION = 5;
 const CACHE_PREFIX = `FEG-v${CACHE_VERSION}`;
 
 export const ALL_CACHES = {
@@ -71,6 +71,7 @@ export function precacheStaticAssets() {
       let toPrefetch = Object.keys(assetManifestJson)
         .filter(_shouldPrecacheFile)
         .map(asset => assetManifestJson[asset]);
+      toPrefetch.push('/'); // Push index.html to prefetch array
       // Create prefetch cache and add assets to it
       return caches.open(ALL_CACHES.prefetch).then(prefetchCache => {
         return prefetchCache.addAll(toPrefetch);
