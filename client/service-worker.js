@@ -6,6 +6,8 @@ import {
 } from './sw/caches.js';
 
 const FALLBACK_IMG_URL = 'https://localhost:3100/images/fallback-grocery.png';
+const INDEX_HTML_PATH = '/';
+const INDEX_HTML_URL = new URL(INDEX_HTML_PATH, self.location).toString();
 
 /**
  * WE HAVE 3 CACHES FOR DIFF TYPES OF DATA (check './sw/caches.js)
@@ -71,7 +73,8 @@ self.addEventListener('fetch', event => {
 });
 
 /* ===================================================== */
-/* ======= HELPER FUNCTIONS (Cache then Network Technique) ======= */
+/* ======= HELPER FUNCTIONS ======= */
+// (Network with Cache Backup Technique && Cache then Network Technique)
 
 // ====== Caching images ======
 function fetchImageOrFallback(fetchEvent) {
@@ -87,14 +90,21 @@ function fetchImageOrFallback(fetchEvent) {
           cacheName: ALL_CACHES.fallbackImages
         });
       } else {
-        // Else, return image from the server
-        return response;
+        // Else, cache and return image from the server
+        return caches.open(ALL_CACHES.fallback).then(cache => {
+          // Clone the response and put its copy to the cache
+          let clonedResponse = response.clone();
+          // cache.put() is not fetching again, more efficient than cache.add
+          cache.put(fetchEvent.request, clonedResponse);
+          // Resolve Promise with the original response
+          return response;
+        });
       }
     })
     .catch(() => {
-      // IF network fails, go to fallbackImages cache
-      return caches.match(FALLBACK_IMG_URL, {
-        cacheName: ALL_CACHES.fallbackImages
+      // IF network fails, go to fallback cache
+      return caches.match(fetchEvent.request, {
+        cacheName: ALL_CACHES.fallback
       });
     });
 }
