@@ -1,3 +1,4 @@
+import idb from 'idb';
 import {
   precacheStaticAssets,
   removeUnusedCaches,
@@ -5,7 +6,17 @@ import {
   ALL_CACHES
 } from './sw/caches.js';
 
-const FALLBACK_IMG_URL = 'https://localhost:3100/images/fallback-grocery.png';
+const FALLBACK_IMG_URLS = [
+  'https://localhost:3100/images/fallback-grocery.png',
+  'https://localhost:3100/images/fallback-bakery.png',
+  'https://localhost:3100/images/fallback-dairy.png',
+  'https://localhost:3100/images/fallback-frozen.png',
+  'https://localhost:3100/images/fallback-fruit.png',
+  'https://localhost:3100/images/fallback-herbs.png',
+  'https://localhost:3100/images/fallback-meat.png',
+  'https://localhost:3100/images/fallback-vegetables.png'
+];
+
 const INDEX_HTML_PATH = '/';
 const INDEX_HTML_URL = new URL(INDEX_HTML_PATH, self.location).toString();
 
@@ -24,10 +35,14 @@ self.addEventListener('install', event => {
       // Fetch fallback image and add it to fallbackImages cache
       caches.open(ALL_CACHES.fallbackImages).then(cache => {
         // cache.add fetches provided url and stores data
-        cache.add(FALLBACK_IMG_URL);
+        cache.addAll(FALLBACK_IMG_URLS);
       }),
+
       // Fetch assets, then populate the prefetch cache
-      precacheStaticAssets()
+      precacheStaticAssets(),
+
+      // Populate IndexDB with grocery items
+      downloadGroceryItems()
     ])
   );
 });
@@ -103,9 +118,7 @@ function fetchImageOrFallback(fetchEvent) {
     .then(response => {
       // IF response without image, go to fallbackImages cache
       if (!response.ok) {
-        return caches.match(FALLBACK_IMG_URL, {
-          cacheName: ALL_CACHES.fallbackImages
-        });
+        return fallbackImgForRequest(fetchEvent.request);
       } else {
         // Else, cache and return image from the server
         return caches.open(ALL_CACHES.fallback).then(cache => {
@@ -123,6 +136,32 @@ function fetchImageOrFallback(fetchEvent) {
       return caches.match(fetchEvent.request, {
         cacheName: ALL_CACHES.fallback
       });
+    });
+}
+
+function fallbackImgForRequest(request) {
+  let path = new URL(request.url).pathname;
+  let itemId = parseInt(
+    path.substring(path.lastIndexOf('/') + 1, path.lastIndexOf('.')),
+    10
+  );
+
+  return groceryItemDb
+    .then(db => {
+      return db
+        .transaction('grocery-items')
+        .objectStore('grocery-items')
+        .get(itemId);
+    })
+    .then(groceryItem => {
+      let { category } = groceryItem;
+
+      return caches.match(
+        `https://localhost:3100/images/fallback-${category.toLowerCase()}.png`,
+        {
+          cacheName: ALL_CACHES.fallbackImages
+        }
+      );
     });
 }
 
@@ -146,6 +185,34 @@ function fetchAPIWithFallback(fetchEvent) {
       .catch(() => {
         // IF network fails, serve from the cache
         return cache.match(fetchEvent.request);
+      });
+  });
+}
+
+// ====== IndexDB ======
+function groceryItemDb() {
+  return idb.open('grocery-item-store', 1, upgradeDb => {
+    switch (upgradeDb.oldVersion) {
+    case 0:
+      upgradeDb.createObjectStore('grocery-items', { keyPath: 'id' });
+    }
+  });
+}
+
+function downloadGroceryItems() {
+  return groceryItemDb().then(db => {
+    fetch('https://localhost:3100/api/grocery/items?limit=99999')
+      .then(response => response.json())
+      .then(({ data: groceryItems }) => {
+        let tx = db.transaction('grocery-items', 'readwrite');
+        tx.objectStore('grocery-items').clear();
+        tx.complete.then(() => {
+          let txx = db.transaction('grocery-items', 'readwrite');
+          groceryItems.forEach(item => {
+            txx.objectStore('grocery-items').put(item);
+          });
+          return txx.complete;
+        });
       });
   });
 }
