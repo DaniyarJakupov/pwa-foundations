@@ -23,38 +23,47 @@ const INDEX_HTML_URL = new URL(INDEX_HTML_PATH, self.location).toString();
 /**
  * WE HAVE 3 CACHES FOR DIFF TYPES OF DATA (check './sw/caches.js)
  *  1. fallbackImages: cacheName('FALLBACK_IMAGES'), [fallback image]
- *  2. prefetch: cacheName('PREFETCH'), [app.js, web-app-manifest.json, static img]
+ *  2. prefetch: cacheName('PREFETCH'), [index.html, app.js, web-app-manifest.json, static img(app icons)]
  *  3. fallback: cacheName('FALLBACK') [api calls]
  */
 
-/* INSTALL SERVICE WORKER EVENT LISTENER */
+/**
+ * Service Worker has 3 lifecycle events
+ * 1. Installation
+ * 2. Activation
+ * 3. Fetch
+ */
+
+/* 1. 'INSTALL' EVENT LISTENER */
 self.addEventListener('install', event => {
-  // .waitUntil expects a Promise
+  // event.waitUntil expects a Promise
   event.waitUntil(
+    // Promise.all will be resolved when all operations are done
     Promise.all([
-      // Fetch fallback image and add it to fallbackImages cache
+      // Fetch fallback images and add them to fallbackImages cache
       caches.open(ALL_CACHES.fallbackImages).then(cache => {
-        // cache.add fetches provided url and stores data
+        // cache.addAll fetches provided URLs and stores responses
         cache.addAll(FALLBACK_IMG_URLS);
       }),
 
-      // Fetch assets, then populate the prefetch cache
+      // Fetch assets [index.html, app.js, etc], then populate the prefetch cache
       precacheStaticAssets(),
 
       // Populate IndexDB with grocery items
+      // {id: 1, name: "Banana", category: "Fruit", imageUrl: "/images/6.jpg", price: 0.36 }
       downloadGroceryItems()
     ])
   );
 });
 /* ===================================================== */
-/* ACTIVATE SERVICE WORKER EVENT LISTENER */
+/* 2. 'ACTIVATE' EVENT LISTENER */
 self.addEventListener('activate', event => {
   // Delete all caches other than those whose names are provided in a list
   event.waitUntil(removeUnusedCaches(ALL_CACHES_LIST));
 });
 
 /* ===================================================== */
-/* FETCH REQUESTS EVENT LISTENER */
+/* 3. 'FETCH' EVENT LISTENER */
 self.addEventListener('fetch', event => {
   let acceptHeader = event.request.headers.get('accept');
   let requestUrl = new URL(event.request.url);
@@ -86,7 +95,7 @@ self.addEventListener('fetch', event => {
   // .respondWith() takes a Promise
   event.respondWith(
     caches
-      // Firstly, check prefetch cache [app.js, web-app-manifest.json, static img]
+      // Firstly, check prefetch cache [index.html, app.js, web-app-manifest.json, static img]
       .match(event.request, { cacheName: ALL_CACHES.prefetch })
       .then(response => {
         // If assets are found, return them
@@ -104,11 +113,11 @@ self.addEventListener('fetch', event => {
   );
 });
 
-/* ===================================================== */
-/* ======= HELPER FUNCTIONS ======= */
+/* ==================================================================================== */
+/* ============================================ HELPER FUNCTIONS ====================== */
 // (Network with Cache Backup Technique && Cache then Network Technique)
 
-// ====== Caching images ======
+// ===================================== Caching images =====================================
 function fetchImageOrFallback(fetchEvent) {
   // Fetch images from the server
   return fetch(fetchEvent.request, {
@@ -140,13 +149,16 @@ function fetchImageOrFallback(fetchEvent) {
 }
 
 function fallbackImgForRequest(request) {
+  // path: /images/1234.png
   let path = new URL(request.url).pathname;
+  // Get id of the item from its image
   let itemId = parseInt(
-    path.substring(path.lastIndexOf('/') + 1, path.lastIndexOf('.')),
+    path.substr(path.lastIndexOf('/') + 1, path.lastIndexOf('.')),
     10
   );
 
-  return groceryItemDb
+  // Get item object from DB by its id
+  return groceryItemDb()
     .then(db => {
       return db
         .transaction('grocery-items')
@@ -154,8 +166,8 @@ function fallbackImgForRequest(request) {
         .get(itemId);
     })
     .then(groceryItem => {
+      // Return fallback image depending on item category
       let { category } = groceryItem;
-
       return caches.match(
         `https://localhost:3100/images/fallback-${category.toLowerCase()}.png`,
         {
@@ -165,7 +177,7 @@ function fallbackImgForRequest(request) {
     });
 }
 
-// ====== Caching API responses (json, etc) ======
+// ===================================== Caching API responses (json, etc) ===================
 /**
  * @return {Promise<Response>}
  */
@@ -189,8 +201,9 @@ function fetchAPIWithFallback(fetchEvent) {
   });
 }
 
-// ====== IndexDB ======
+// ===================================== IndexDB =====================================
 function groceryItemDb() {
+  // Create grocery-item-store DB and grocery-items store
   return idb.open('grocery-item-store', 1, upgradeDb => {
     switch (upgradeDb.oldVersion) {
     case 0:
@@ -200,13 +213,17 @@ function groceryItemDb() {
 }
 
 function downloadGroceryItems() {
+  // Open DB
   return groceryItemDb().then(db => {
+    // Fetch grocery items
     fetch('https://localhost:3100/api/grocery/items?limit=99999')
       .then(response => response.json())
       .then(({ data: groceryItems }) => {
+        // Clear grocery-items store when new SW is installed
         let tx = db.transaction('grocery-items', 'readwrite');
         tx.objectStore('grocery-items').clear();
         tx.complete.then(() => {
+          // Populate grocery-items store with fetched grocery items
           let txx = db.transaction('grocery-items', 'readwrite');
           groceryItems.forEach(item => {
             txx.objectStore('grocery-items').put(item);
