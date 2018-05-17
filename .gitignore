@@ -7,4 +7,5 @@ tmp
 db/development.sqlite
 .DS_Store
 private/*
+private
 !private/README.md
