@@ -69,8 +69,15 @@ self.addEventListener('push', event => {
   if (textData === 'TERMINATE') {
     self.registration.unregister();
     return;
-  } else {
-    console.log('PUSH RECEIVED', textData);
+  }
+  console.log('PUSH RECEIVED', textData);
+  let eventData = event.data.json();
+  if ('notification' in eventData) {
+    let { notification } = eventData;
+    self.registration.showNotification(notification.title, {
+      body: notification.body,
+      icon: 'https://localhost:3100/img/launcher-icon-4x.png'
+    });
   }
 });
 
@@ -115,7 +122,7 @@ self.addEventListener('fetch', event => {
         // If client requests images
         if (isGroceryImage) {
           return fetchImageOrFallback(event);
-        } else if (isAPI) {
+        } else if (isAPI && event.request.method === 'GET') {
           // If client requests data from the server (json, etc...)
           return fetchAPIWithFallback(event);
         }
@@ -133,30 +140,36 @@ self.addEventListener('fetch', event => {
 function fetchImageOrFallback(fetchEvent) {
   // Fetch images from the server
   return fetch(fetchEvent.request, {
-    mode: 'cors'
-    //credentials: 'omit' // in case CORS wildcard headers are present
+    mode: 'cors',
+    credentials: 'omit' // in case CORS wildcard headers are present
   })
     .then(response => {
+      // Clone the response
+      let clonedResponse = response.clone();
       // IF response without image, go to fallbackImages cache
       if (!response.ok) {
         return fallbackImgForRequest(fetchEvent.request);
-      } else {
-        // Else, cache and return image from the server
-        return caches.open(ALL_CACHES.fallback).then(cache => {
-          // Clone the response and put its copy to the cache
-          let clonedResponse = response.clone();
+      }
+      // Else, cache and return image from the server
+      caches.open(ALL_CACHES.fallback).then(cache => {
+        if (response.ok) {
+          // Put response copy to the cache
           // cache.put() is not fetching again, more efficient than cache.add
           cache.put(fetchEvent.request, clonedResponse);
-          // Resolve Promise with the original response
-          return response;
-        });
-      }
+        }
+      });
+      // Resolve Promise with the original response
+      return response;
     })
     .catch(() => {
       // IF network fails, go to fallback cache
-      return caches.match(fetchEvent.request, {
-        cacheName: ALL_CACHES.fallback
-      });
+      return caches
+        .match(fetchEvent.request, {
+          cacheName: ALL_CACHES.fallback
+        })
+        .then(response => {
+          return response || fallbackImgForRequest(fetchEvent.request);
+        });
     });
 }
 
