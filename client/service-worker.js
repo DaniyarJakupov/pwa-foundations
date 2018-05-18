@@ -61,9 +61,21 @@ self.addEventListener('activate', event => {
   // Delete all caches other than those whose names are provided in a list
   event.waitUntil(removeUnusedCaches(ALL_CACHES_LIST));
 });
+/* ===================================================== */
+/* 3. 'PUSH' EVENT LISTENER */
+self.addEventListener('push', event => {
+  let { data } = event;
+  let textData = data.text();
+  if (textData === 'TERMINATE') {
+    self.registration.unregister();
+    return;
+  } else {
+    console.log('PUSH RECEIVED', textData);
+  }
+});
 
 /* ===================================================== */
-/* 3. 'FETCH' EVENT LISTENER */
+/* 4. 'FETCH' EVENT LISTENER */
 self.addEventListener('fetch', event => {
   let acceptHeader = event.request.headers.get('accept');
   let requestUrl = new URL(event.request.url);
@@ -190,7 +202,9 @@ function fetchAPIWithFallback(fetchEvent) {
         // Clone the response and put its copy to the cache
         let clonedResponse = response.clone();
         // cache.put() is not fetching again, more efficient than cache.add
-        cache.put(fetchEvent.request, clonedResponse);
+        if (response.ok) {
+          cache.put(fetchEvent.request, clonedResponse);
+        }
         // Resolve Promise with the original response
         return response;
       })
