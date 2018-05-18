@@ -27,6 +27,14 @@ import 'worker-loader?name=./qr-worker.js!./qr-worker.js';
 // Service worker
 import 'worker-loader?name=./service-worker.js!./service-worker.js';
 
+ReactDOM.render(<App />, document.getElementById('root'));
+
+if (module.hot) {
+  module.hot.accept(function() {
+    console.log('Accepting the updated printMe module!');
+  });
+}
+
 // WEB PUSH
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -42,20 +50,12 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 let subscribeOptions = {
+  userVisibleOnly: true,
   applicationServerKey: urlBase64ToUint8Array(VAPID.publicKey)
 };
 
-ReactDOM.render(<App />, document.getElementById('root'));
-
-if (module.hot) {
-  module.hot.accept(function() {
-    console.log('Accepting the updated printMe module!');
-  });
-}
-
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/service-worker.js').then(registration => {
-    // Ask permissions for PUSH Notifications inside browser
     return registration.pushManager
       .subscribe(subscribeOptions)
       .then(pushSubscription => {
