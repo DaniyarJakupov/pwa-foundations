@@ -14,18 +14,25 @@
   "private": true,
   "license": "SEE LICENSE IN LICENSE and LICENSE-exercises",
   "scripts": {
-    "watch:api": "./node_modules/.bin/nodemon -e js --watch ./server/api-server server/api-server/index.js",
-    "watch:ui": "./node_modules/.bin/nodemon -e js --watch ./server/asset-server server/asset-server/index.js",
-    "watch": "concurrently --names 'API,UI' -c 'bgBlue,bgMagenta' 'npm run watch:api' 'npm run watch:ui'",
+    "watch:api":
+      "./node_modules/.bin/nodemon -e js --watch ./server/api-server server/api-server/index.js",
+    "watch:ui":
+      "./node_modules/.bin/nodemon -e js --watch ./server/asset-server server/asset-server/index.js",
+    "watch":
+      "concurrently --names 'API,UI' -c 'bgBlue,bgMagenta' 'npm run watch:api' 'npm run watch:ui'",
     "start:api": "node server/api-server/index.js",
     "start:ui": "node server/asset-server/index.js",
-    "start": "concurrently --names 'API,UI' -c 'bgBlue,bgMagenta' 'npm run start:api' 'npm run start:ui'",
-    "build:dev": " ./node_modules/.bin/webpack --config webpack.config.js --env dev",
-    "build:prod": " ./node_modules/.bin/webpack --config webpack.config.js --env prod",
+    "start":
+      "concurrently --names 'API,UI' -c 'bgBlue,bgMagenta' 'npm run start:api' 'npm run start:ui'",
+    "build:dev":
+      " ./node_modules/.bin/webpack --config webpack.config.js --env dev",
+    "build:prod":
+      " ./node_modules/.bin/webpack --config webpack.config.js --env prod",
     "clean": "rm -rf dist/* db/development.sqlite && npm run prepcerts",
     "test": "jest",
     "prepvapid": "web-push generate-vapid-keys --json > ./private/vapid.json",
-    "prepcerts": "npm run prepvapid && node ./server/gen-certs.js && rm -rf dist/*.pem && mkdir -p dist && cp private/*.pem dist/",
+    "prepcerts":
+      "npm run prepvapid && node ./server/gen-certs.js && rm -rf dist/*.pem && mkdir -p dist && cp private/*.pem dist/",
     "heroku-postbuild": "npm run build:prod"
   },
   "devDependencies": {
@@ -83,6 +90,6 @@
     "moment": "^2.19.3",
     "sequelize": "^4.19.0",
     "sqlite3": "^3.1.8",
-    "web-push": "^3.0.0"
+    "web-push": "^3.3.1"
   }
 }

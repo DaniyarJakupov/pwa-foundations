@@ -197,6 +197,12 @@ acorn@^5.3.0:
   version "5.5.1"
   resolved "https://registry.yarnpkg.com/acorn/-/acorn-5.5.1.tgz#84e05a9ea0acbe131227da50301e62464dc9c1d8"
 
+agent-base@^4.1.0:
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/agent-base/-/agent-base-4.2.0.tgz#9838b5c3392b962bad031e6a4c5e1024abec45ce"
+  dependencies:
+    es6-promisify "^5.0.0"
+
 ajv-keywords@^1.0.0:
   version "1.5.1"
   resolved "https://registry.yarnpkg.com/ajv-keywords/-/ajv-keywords-1.5.1.tgz#314dd0a4b3368fad3dfcdc54ede6171b886daf3c"
@@ -408,9 +414,17 @@ asap@~2.0.3:
   version "2.0.5"
   resolved "https://registry.yarnpkg.com/asap/-/asap-2.0.5.tgz#522765b50c3510490e52d7dcfe085ef9ba96958f"
 
-asn1.js@^4.0.0, asn1.js@^4.8.1:
+asn1.js@^4.0.0:
   version "4.9.1"
   resolved "https://registry.yarnpkg.com/asn1.js/-/asn1.js-4.9.1.tgz#48ba240b45a9280e94748990ba597d216617fd40"
+  dependencies:
+    bn.js "^4.0.0"
+    inherits "^2.0.1"
+    minimalistic-assert "^1.0.0"
+
+asn1.js@^5.0.0:
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/asn1.js/-/asn1.js-5.0.0.tgz#2b0abbc7fa66dc0aadd06a4683c73608c32b0696"
   dependencies:
     bn.js "^4.0.0"
     inherits "^2.0.1"
@@ -2640,6 +2654,16 @@ es6-promise@^3.3.1:
   version "3.3.1"
   resolved "https://registry.yarnpkg.com/es6-promise/-/es6-promise-3.3.1.tgz#a08cdde84ccdbf34d027a1451bc91d4bcd28a613"
 
+es6-promise@^4.0.3:
+  version "4.2.4"
+  resolved "https://registry.yarnpkg.com/es6-promise/-/es6-promise-4.2.4.tgz#dc4221c2b16518760bd8c39a52d8f356fc00ed29"
+
+es6-promisify@^5.0.0:
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/es6-promisify/-/es6-promisify-5.0.0.tgz#5109d62f3e56ea967c4b63505aef08291c8a5203"
+  dependencies:
+    es6-promise "^4.0.3"
+
 es6-set@~0.1.5:
   version "0.1.5"
   resolved "https://registry.yarnpkg.com/es6-set/-/es6-set-0.1.5.tgz#d2b3ec5d4d800ced818db538d28974db0a73ccb1"
@@ -3797,15 +3821,22 @@ http-signature@~1.2.0:
     jsprim "^1.2.2"
     sshpk "^1.7.0"
 
-http_ece@^0.5.2:
-  version "0.5.2"
-  resolved "https://registry.yarnpkg.com/http_ece/-/http_ece-0.5.2.tgz#5654d7ec9d996b749ce00a276e18d54b6d8f905f"
+http_ece@1.0.5:
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/http_ece/-/http_ece-1.0.5.tgz#b60660faaf14215102d1493ea720dcd92b53372f"
   dependencies:
     urlsafe-base64 "~1.0.0"
 
 https-browserify@0.0.1:
   version "0.0.1"
   resolved "https://registry.yarnpkg.com/https-browserify/-/https-browserify-0.0.1.tgz#3f91365cabe60b77ed0ebba24b454e3e09d95a82"
+
+https-proxy-agent@^2.2.1:
+  version "2.2.1"
+  resolved "https://registry.yarnpkg.com/https-proxy-agent/-/https-proxy-agent-2.2.1.tgz#51552970fa04d723e04c56d04178c3f92592bbc0"
+  dependencies:
+    agent-base "^4.1.0"
+    debug "^3.1.0"
 
 iconv-lite@0.4.13:
   version "0.4.13"
@@ -7985,12 +8016,13 @@ wbuf@^1.1.0, wbuf@^1.7.2:
   dependencies:
     minimalistic-assert "^1.0.0"
 
-web-push@^3.0.0:
-  version "3.2.4"
-  resolved "https://registry.yarnpkg.com/web-push/-/web-push-3.2.4.tgz#3b603489777f215853e4e4f3d8664dcb861dd2c1"
+web-push@^3.3.1:
+  version "3.3.1"
+  resolved "https://registry.yarnpkg.com/web-push/-/web-push-3.3.1.tgz#6d49517b927ffb97241a719d2f7f9014de130f09"
   dependencies:
-    asn1.js "^4.8.1"
-    http_ece "^0.5.2"
+    asn1.js "^5.0.0"
+    http_ece "1.0.5"
+    https-proxy-agent "^2.2.1"
     jws "^3.1.3"
     minimist "^1.2.0"
     urlsafe-base64 "^1.0.0"
